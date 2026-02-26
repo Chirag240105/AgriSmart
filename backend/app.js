@@ -9,6 +9,11 @@ import cropRoutes from "./src/routes/cropRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 import shipmentRoutes from "./src/routes/shipmentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
+import weatherRoutes from "./src/routes/weatherRoutes.js";
+import priceRoutes from "./src/routes/priceRoutes.js";
+import diseaseRoutes from "./src/routes/diseaseRoutes.js";
+import chatbotRoutes from "./src/routes/chatbotRoutes.js";
+import { startPriceStream } from "./src/services/priceStreamService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,12 +40,17 @@ app.use("/api/crops", cropRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/shipments", shipmentRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/weather", weatherRoutes);
+app.use("/api/prices", priceRoutes);
+app.use("/api/disease", diseaseRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route not found: ${req.originalUrl}` });
 });
 
 connectDB();
+startPriceStream();
 const port = Number(process.env.PORT) || 5000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
