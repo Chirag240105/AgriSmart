@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
         enum: ['farmer', 'buyer'],
         required: true
     },
+    profileImage:{
+        type: String,
+        default: "",
+    },
     phone: {
         type: String
     },
