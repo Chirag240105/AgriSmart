@@ -1,0 +1,117 @@
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { TrendingUp, TrendingDown, Leaf } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { priceService } from '../services/api';
+import { toast } from 'sonner';
+export const PricesPage = () => {
+    const [prices, setPrices] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+        const fetchPrices = async () => {
+            try {
+                const response = await priceService.getLatestPrices(undefined, 12);
+                const mapped = (response.data?.data || []).map((record) => {
+                    const history = record.historicalPrices || [];
+                    const latestHistorical = history[history.length - 1];
+                    const oldValue = latestHistorical?.price || record.predictedPrice || 0;
+                    const newValue = record.predictedPrice || 0;
+                    const change = oldValue ? ((newValue - oldValue) / oldValue) * 100 : 0;
+                    const trend = record.trend === 'increase' ? 'up' : record.trend === 'decrease' ? 'down' : 'stable';
+                    return {
+                        id: record._id,
+                        product: record.cropName || 'Unknown Crop',
+                        currentPrice: Number(record.predictedPrice || 0),
+                        unit: record.unit || 'kg',
+                        trend,
+                        change: Number(change.toFixed(2)),
+                        historicalPrices: history,
+                    };
+                });
+                setPrices(mapped);
+            }
+            catch (error) {
+                toast.error(error?.response?.data?.message || 'Failed to load prices');
+            }
+            finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPrices();
+    }, []);
+    const chartData = useMemo(() => {
+        const series = prices.slice(0, 3);
+        if (series.length === 0)
+            return [];
+        const labels = new Set();
+        series.forEach((item) => {
+            (item.historicalPrices || []).forEach((point) => {
+                labels.add(new Date(point.date).toLocaleDateString('en-IN', { month: 'short' }));
+            });
+        });
+        const sortedLabels = Array.from(labels);
+        return sortedLabels.map((label) => {
+            const entry = { month: label };
+            series.forEach((item) => {
+                const point = (item.historicalPrices || []).find((p) => new Date(p.date).toLocaleDateString('en-IN', { month: 'short' }) === label);
+                entry[item.product] = point?.price || null;
+            });
+            return entry;
+        });
+    }, [prices]);
+    if (isLoading) {
+        return (<div className="flex items-center justify-center h-64">
+        <div className="animate-pulse">Loading...</div>
+      </div>);
+    }
+    return (<div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Market Prices</h1>
+        <p className="text-muted-foreground">Real-time market prices and trends</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {prices.map((price, index) => (<motion.div key={price.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
+            <Card className="hover:shadow-lg transition-all">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <Leaf className="w-6 h-6 text-green-600 dark:text-green-400"/>
+                  </div>
+                  <div className={`flex items-center gap-1 text-sm font-medium ${price.trend === 'up' ? 'text-green-600' : price.trend === 'down' ? 'text-red-600' : 'text-gray-600'}`}>
+                    {price.trend === 'up' ? (<TrendingUp className="w-4 h-4"/>) : price.trend === 'down' ? (<TrendingDown className="w-4 h-4"/>) : (<TrendingUp className="w-4 h-4"/>)}
+                    {Math.abs(price.change)}%
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold mb-1">{price.product}</h3>
+                <p className="text-sm text-muted-foreground mb-3">per {price.unit}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">INR {price.currentPrice}</span>
+                  <span className="text-sm text-muted-foreground">/{price.unit}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Price Trends</CardTitle>
+          <CardDescription>Historical price trends from recent data points</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartData.length === 0 ? (<p className="text-sm text-muted-foreground">No historical price data available.</p>) : (<ResponsiveContainer width="100%" height={400}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3"/>
+                <XAxis dataKey="month"/>
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {prices.slice(0, 3).map((item, idx) => (<Line key={item.id} type="monotone" dataKey={item.product} stroke={idx === 0 ? '#16a34a' : idx === 1 ? '#84cc16' : '#f59e0b'} strokeWidth={2} connectNulls/>))}
+              </LineChart>
+            </ResponsiveContainer>)}
+        </CardContent>
+      </Card>
+    </div>);
+};
