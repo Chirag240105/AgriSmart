@@ -1,0 +1,90 @@
+                  <CardTitle className="text-sm font-medium">{t('dashboard.totalSpent')}</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground"/>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">INR {(stats.totalSpent / 1000).toFixed(0)}K</div>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.allTime')}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t('dashboard.savings')}</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-green-600"/>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">INR {(stats.savedAmount / 1000).toFixed(0)}K</div>
+                  <p className="text-xs text-green-600">{t('dashboard.savedThrough')}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>Your latest purchase orders</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentOrders.map((order) => (<div key={order.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{order.cropName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.quantity} units � {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">INR {order.totalAmount.toLocaleString()}</p>
+                      <Badge variant={order.status === 'paid' ? 'default' : 'outline'}>
+                        {order.status}
+                      </Badge>
+                    </div>
+                  </div>))}
+              </div>
+              <Link to="/orders">
+                <Button variant="outline" className="w-full mt-4">
+                  View All Orders
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </>)}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Market Prices</CardTitle>
+          <CardDescription>Current market rates</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {marketPrices.map((price) => (<div key={price.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <Leaf className="w-5 h-5 text-green-600 dark:text-green-400"/>
+                  </div>
+                  <div>
+                    <p className="font-medium">{price.product}</p>
+                    <p className="text-sm text-muted-foreground">per {price.unit}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">INR {price.currentPrice}</p>
+                  <div className={`flex items-center gap-1 text-xs ${price.trend === 'up' ? 'text-green-600' : price.trend === 'down' ? 'text-red-600' : 'text-gray-600'}`}>
+                    {price.trend === 'up' ? (<TrendingUp className="h-3 w-3"/>) : (<TrendingDown className="h-3 w-3"/>)}
+                    {Math.abs(price.change)}%
+                  </div>
+                </div>
+              </div>))}
+          </div>
+          <Link to="/prices">
+            <Button variant="outline" className="w-full mt-4">
+              View All Prices
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>

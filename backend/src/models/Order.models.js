@@ -29,7 +29,16 @@ const orderSchema = new mongoose.Schema({
         default: "pending"
     },
     paymentMethod: String,
-    cancelledReason: String
+    cancelledReason: String,
+     paymentId: {
+        type: String        // razorpay_payment_id after successful payment
+    },
+    razorpayOrderId: {
+        type: String        // Razorpay order_id created on backend
+    },
+    refundId: {
+        type: String        // Razorpay refund_id after refund is initiated
+    }
 }, {timestamps: true})
 
 export const Order = mongoose.model("Order", orderSchema);

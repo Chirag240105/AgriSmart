@@ -6,26 +6,29 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 export const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const { theme, setTheme } = useTheme();
+    const { t } = useTranslation();
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
     const menuItems = [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
-        { icon: Leaf, label: 'Crops', path: '/crops' },
-        { icon: ShoppingCart, label: 'Orders', path: '/orders' },
-        { icon: Package, label: 'Shipments', path: '/shipments' },
-        { icon: Cloud, label: 'Weather', path: '/weather' },
-        { icon: TrendingUp, label: 'Prices', path: '/prices' },
-        { icon: AlertCircle, label: 'Disease Detection', path: '/disease' },
-        { icon: MessageSquare, label: 'AI Assistant', path: '/chatbot' },
-        { icon: User, label: 'Profile', path: '/profile' },
+        { icon: Home, label: t('nav.dashboard'), path: '/dashboard' },
+        { icon: Leaf, label: t('nav.crops'), path: '/crops' },
+        { icon: ShoppingCart, label: t('nav.orders'), path: '/orders' },
+        { icon: Package, label: t('nav.shipments'), path: '/shipments' },
+        { icon: Cloud, label: t('nav.weather'), path: '/weather' },
+        { icon: TrendingUp, label: t('nav.prices'), path: '/prices' },
+        { icon: AlertCircle, label: t('nav.disease'), path: '/disease' },
+        { icon: MessageSquare, label: t('nav.chatbot'), path: '/chatbot' },
+        { icon: User, label: t('nav.profile'), path: '/profile' },
     ];
     return (<div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Mobile Header */}
@@ -98,7 +101,7 @@ export const DashboardLayout = () => {
             </div>
             <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogout}>
               <LogOut className="w-4 h-4"/>
-              Logout
+              {t('nav.logout')}
             </Button>
           </div>
         </div>
@@ -112,15 +115,18 @@ export const DashboardLayout = () => {
         <header className="hidden lg:flex items-center justify-between p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Welcome back, {user?.name}! 👋
+              {t('dashboard.welcomeBack')}, {user?.name}! 👋
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Manage your agricultural operations with ease
+              {t('dashboard.manageOps')}
             </p>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
+            </Button>
+          </div>
         </header>
 
         <main className="p-4 lg:p-6">

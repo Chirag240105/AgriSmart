@@ -8,13 +8,27 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 export const LoginPage = () => {
+    const languages = [
+        { code: 'en', label: 'EN', full: 'English' },
+        { code: 'hi', label: 'हि', full: 'हिंदी' },
+        { code: 'pa', label: 'ਪੰ', full: 'ਪੰਜਾਬੀ' },
+        { code: 'ta', label: 'த', full: 'தமிழ்' },
+        { code: 'te', label: 'తె', full: 'తెలుగు' },
+        { code: 'mr', label: 'म', full: 'मराठी' },
+    ];
+    const { t, i18n } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState('');
     const { login } = useAuth();
+    const changeLanguage = (code) => {
+        i18n.changeLanguage(code);
+        localStorage.setItem('i18nextLng', code);
+    };
     const navigate = useNavigate();
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -49,12 +63,23 @@ export const LoginPage = () => {
 
         <Card className="border-2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl text-center">{t('auth.welcomeBack')}</CardTitle>
             <CardDescription className="text-center">
-              Sign in to your AgriSmart account
+              {t('auth.signInSubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">{t('auth.selectLanguage')}</p>
+              <div className="flex flex-wrap gap-2">
+                {languages.map((lang) => {
+                const active = i18n.resolvedLanguage === lang.code;
+                return (<button key={lang.code} type="button" onClick={() => changeLanguage(lang.code)} className={`px-3 py-1 rounded-full text-sm border ${active ? 'bg-green-600 text-white border-green-600' : 'border-gray-300 text-gray-700 dark:text-gray-200'}`}>
+                      {lang.full}
+                    </button>);
+            })}
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (<motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400">
                   <AlertCircle className="w-5 h-5"/>
@@ -62,15 +87,15 @@ export const LoginPage = () => {
                 </motion.div>)}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400"/>
-                  <Input id="email" type="email" placeholder="farmer@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required/>
+                  <Input id="email" type="email" placeholder={t('auth.email')} value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required/>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400"/>
                   <Input id="password"  type={!showPassword ? "password" : "text"}
@@ -87,31 +112,31 @@ export const LoginPage = () => {
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" className="rounded"/>
-                  <span className="text-gray-600 dark:text-gray-400">Remember me</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('auth.rememberMe')}</span>
                 </label>
                 <a href="#" className="text-sm text-primary hover:underline">
-                  Forgot password?
+                  {t('auth.forgotPassword')}
                 </a>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? t('common.processing') : t('auth.signIn')}
               </Button>
             </form>
 
            
 
             <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <Link to="/signup" className="text-primary hover:underline font-medium">
-                Sign up
+                {t('auth.signup')}
               </Link>
             </div>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          {t('auth.terms')}
         </p>
       </motion.div>
     </div>);

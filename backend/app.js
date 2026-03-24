@@ -14,6 +14,7 @@ import priceRoutes from "./src/routes/priceRoutes.js";
 import diseaseRoutes from "./src/routes/diseaseRoutes.js";
 import chatbotRoutes from "./src/routes/chatbotRoutes.js";
 import { startPriceStream } from "./src/services/priceStreamService.js";
+import paymentRoutes from "./src/routes/paymentRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +39,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/crops", cropRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/shipments", shipmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/weather", weatherRoutes);

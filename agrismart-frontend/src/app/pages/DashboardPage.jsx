@@ -10,8 +10,10 @@ import { Badge } from '../components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cropService, orderService, priceService } from '../services/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 export const DashboardPage = () => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const [stats, setStats] = useState(null);
     const [recentCrops, setRecentCrops] = useState([]);
     const [recentOrders, setRecentOrders] = useState([]);
@@ -96,15 +98,15 @@ export const DashboardPage = () => {
     }, [recentOrders]);
     if (!stats) {
         return (<div className="flex items-center justify-center h-64">
-        <div className="animate-pulse">Loading...</div>
+        <div className="animate-pulse">{t('common.loading')}</div>
       </div>);
     }
     return (<div className="space-y-6">
       <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome back, {user?.name}!</CardTitle>
+          <CardTitle className="text-2xl">{t('dashboard.welcomeBack')}, {user?.name}!</CardTitle>
           <CardDescription className="text-green-50">
-            Here's what's happening with your {user?.role === 'farmer' ? 'farm' : 'orders'} today
+            {t('dashboard.manageOps')}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -114,12 +116,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Crops</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.totalCrops')}</CardTitle>
                   <Leaf className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalCrops}</div>
-                  <p className="text-xs text-muted-foreground">{stats.activeCrops} available</p>
+                  <p className="text-xs text-muted-foreground">{stats.activeCrops} {t('dashboard.available')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -127,12 +129,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.totalOrders')}</CardTitle>
                   <ShoppingCart className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalOrders}</div>
-                  <p className="text-xs text-muted-foreground">Orders placed</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.ordersPlaced')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -140,7 +142,7 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.revenue')}</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
@@ -156,7 +158,7 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Crops</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.activeCrops')}</CardTitle>
                   <Activity className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
@@ -169,11 +171,11 @@ export const DashboardPage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Revenue by recent order activity</CardDescription>
+              <CardTitle>{t('dashboard.revenueOverview')}</CardTitle>
+              <CardDescription>{t('dashboard.revenueByRecent')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {chartData.length === 0 ? (<p className="text-sm text-muted-foreground">No revenue data yet.</p>) : (<ResponsiveContainer width="100%" height={300}>
+              {chartData.length === 0 ? (<p className="text-sm text-muted-foreground">{t('dashboard.noRevenueData')}</p>) : (<ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3"/>
                     <XAxis dataKey="name"/>
@@ -187,8 +189,8 @@ export const DashboardPage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Crops</CardTitle>
-              <CardDescription>Your latest crop listings</CardDescription>
+              <CardTitle>{t('dashboard.recentCrops')}</CardTitle>
+              <CardDescription>{t('dashboard.latestCropListings')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -201,14 +203,14 @@ export const DashboardPage = () => {
                     <div className="text-right">
                       <p className="font-medium">{crop.quantity} {crop.unit}</p>
                       <Badge variant={crop.status === 'available' ? 'default' : 'secondary'}>
-                        {crop.status}
+                        {t(`crops.${crop.status}`)}
                       </Badge>
                     </div>
                   </div>))}
               </div>
               <Link to="/crops">
                 <Button variant="outline" className="w-full mt-4">
-                  View All Crops
+                  {t('dashboard.viewAllCrops')}
                 </Button>
               </Link>
             </CardContent>
@@ -220,12 +222,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.totalOrders')}</CardTitle>
                   <ShoppingCart className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalOrders}</div>
-                  <p className="text-xs text-muted-foreground">{stats.activeOrders} active orders</p>
+                  <p className="text-xs text-muted-foreground">{stats.activeOrders} {t('dashboard.activeOrdersHelper')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -233,12 +235,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.activeOrders')}</CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.activeOrders}</div>
-                  <p className="text-xs text-muted-foreground">Pending or paid</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.pendingOrPaid')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -246,12 +248,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.totalSpent')}</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">INR {(stats.totalSpent / 1000).toFixed(0)}K</div>
-                  <p className="text-xs text-muted-foreground">All time</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.allTime')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -259,12 +261,12 @@ export const DashboardPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Savings</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('dashboard.savings')}</CardTitle>
                   <TrendingDown className="h-4 w-4 text-green-600"/>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">INR {(stats.savedAmount / 1000).toFixed(0)}K</div>
-                  <p className="text-xs text-green-600">Saved through AgriSmart</p>
+                  <p className="text-xs text-green-600">{t('dashboard.savedThrough')}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -272,8 +274,8 @@ export const DashboardPage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Your latest purchase orders</CardDescription>
+              <CardTitle>{t('dashboard.recentOrders')}</CardTitle>
+              <CardDescription>{t('dashboard.latestPurchase')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -281,20 +283,20 @@ export const DashboardPage = () => {
                     <div>
                       <p className="font-medium">{order.cropName}</p>
                       <p className="text-sm text-muted-foreground">
-                        {order.quantity} units � {new Date(order.createdAt).toLocaleDateString()}
+                        {order.quantity} {t('crops.quantity')} – {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">INR {order.totalAmount.toLocaleString()}</p>
-                      <Badge variant={order.status === 'paid' ? 'default' : 'outline'}>
-                        {order.status}
+                      <Badge variant={order.status === "paid" ? "default" : "outline"}>
+                        {t(`orders.status.${order.status}`)}
                       </Badge>
                     </div>
                   </div>))}
               </div>
               <Link to="/orders">
                 <Button variant="outline" className="w-full mt-4">
-                  View All Orders
+                  {t('dashboard.viewAllOrders')}
                 </Button>
               </Link>
             </CardContent>
@@ -303,8 +305,8 @@ export const DashboardPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Market Prices</CardTitle>
-          <CardDescription>Current market rates</CardDescription>
+          <CardTitle>{t('dashboard.marketPrices')}</CardTitle>
+          <CardDescription>{t('dashboard.currentRates')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -315,7 +317,7 @@ export const DashboardPage = () => {
                   </div>
                   <div>
                     <p className="font-medium">{price.product}</p>
-                    <p className="text-sm text-muted-foreground">per {price.unit}</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.perUnit')} {price.unit}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -329,7 +331,7 @@ export const DashboardPage = () => {
           </div>
           <Link to="/prices">
             <Button variant="outline" className="w-full mt-4">
-              View All Prices
+              {t('dashboard.latestPrices')}
             </Button>
           </Link>
         </CardContent>
@@ -337,32 +339,32 @@ export const DashboardPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t('dashboard.quickActions')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link to="/crops">
               <Button variant="outline" className="w-full h-20 flex-col gap-2">
                 <Leaf className="w-6 h-6"/>
-                <span>Manage Crops</span>
+                <span>{t('dashboard.manageCrops')}</span>
               </Button>
             </Link>
             <Link to="/orders">
               <Button variant="outline" className="w-full h-20 flex-col gap-2">
                 <ShoppingCart className="w-6 h-6"/>
-                <span>View Orders</span>
+                <span>{t('dashboard.viewOrdersBtn')}</span>
               </Button>
             </Link>
             <Link to="/weather">
               <Button variant="outline" className="w-full h-20 flex-col gap-2">
                 <AlertCircle className="w-6 h-6"/>
-                <span>Check Weather</span>
+                <span>{t('dashboard.checkWeather')}</span>
               </Button>
             </Link>
             <Link to="/chatbot">
               <Button variant="outline" className="w-full h-20 flex-col gap-2">
                 <AlertCircle className="w-6 h-6"/>
-                <span>AI Assistant</span>
+                <span>{t('dashboard.aiAssistant')}</span>
               </Button>
             </Link>
           </div>
