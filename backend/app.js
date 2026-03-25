@@ -10,6 +10,7 @@ import orderRoutes from "./src/routes/orderRoutes.js";
 import shipmentRoutes from "./src/routes/shipmentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import weatherRoutes from "./src/routes/weatherRoutes.js";
+import weatherAdviceRoutes from "./src/routes/weatherAdvice.js"; // ← ADD THIS
 import priceRoutes from "./src/routes/priceRoutes.js";
 import diseaseRoutes from "./src/routes/diseaseRoutes.js";
 import chatbotRoutes from "./src/routes/chatbotRoutes.js";
@@ -41,6 +42,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/shipments", shipmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/weather", weatherRoutes);
+app.use("/api/weather", weatherAdviceRoutes); // ← ADD THIS (shares /api/weather prefix)
 app.use("/api/prices", priceRoutes);
 app.use("/api/disease", diseaseRoutes);
 app.use("/api/chatbot", chatbotRoutes);

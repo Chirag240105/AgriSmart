@@ -2,7 +2,7 @@ import axios from "axios";
 
 const ML_SERVER_URL = process.env.ML_SERVER_URL || "http://localhost:5001";
 
-export const detectDiseaseFromImage = async ({ imageUrl }) => {
+export const detectDiseaseFromImage = async ({ imageUrl, cropName }) => {
   try {
     let imageBuffer;
     let contentType = "image/jpeg";
@@ -22,12 +22,15 @@ export const detectDiseaseFromImage = async ({ imageUrl }) => {
       contentType = response.headers["content-type"] || "image/jpeg";
     }
 
-    // Send image directly as binary to Flask
+    // Send image directly as binary to Flask with crop type
     const { data } = await axios.post(
       `${ML_SERVER_URL}/predict-binary`,
       imageBuffer,
       {
-        headers: { "Content-Type": contentType },
+        headers: { 
+          "Content-Type": contentType,
+          "X-Crop-Type": cropName || "unknown"  // Pass crop name in header
+        },
         timeout: 60000,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,

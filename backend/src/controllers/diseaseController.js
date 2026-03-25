@@ -41,8 +41,11 @@ export const detectCropDisease = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized for this crop" });
     }
 
-    // Call ML server with the Cloudinary URL
-    const result = await detectDiseaseFromImage({ imageUrl });
+    // Call ML server with the Cloudinary URL and crop name
+    const result = await detectDiseaseFromImage({ 
+      imageUrl,
+      cropName: crop.cropName 
+    });
 
     const record = await CropHealth.create({
       farmerId: req.user.id,

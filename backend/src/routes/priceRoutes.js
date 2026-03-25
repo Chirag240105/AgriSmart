@@ -1,11 +1,12 @@
-import express from "express";
-import { getLatestPrices, simulatePriceTick } from "../controllers/priceController.js";
-import { protect } from "../middlewares/authMiddleware.js";
+import express from 'express';
+import { getLatestPrices, predictPrice } from '../controllers/priceController.js';
 
 const router = express.Router();
 
-router.use(protect);
-router.get("/", getLatestPrices);
-router.post("/simulate-tick", simulatePriceTick);
+// GET  /api/prices         → latest ML predictions for 6 default crops
+router.get('/', getLatestPrices);
+
+// POST /api/prices/predict → custom crop/state prediction
+router.post('/predict', predictPrice);
 
 export default router;

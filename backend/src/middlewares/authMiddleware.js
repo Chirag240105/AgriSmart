@@ -14,8 +14,10 @@ export const verifyJWT = async (req, res, next) => {
       const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
       if (token) {
         try {
-          const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-          const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+          // ✅ Fix 1: use JWT_SECRET_KEY (same key used in authController)
+          const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+          // ✅ Fix 2: use decodedToken.id (controller signs with { id }, not { _id })
+          const user = await User.findById(decodedToken?.id).select("-password -refreshToken");
           if (user) req.user = user;
         } catch (err) {
           // Invalid token, continue as guest
@@ -30,8 +32,10 @@ export const verifyJWT = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Not authorized, token failed" });
     }
 
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+    // ✅ Fix 1: use JWT_SECRET_KEY
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    // ✅ Fix 2: use decodedToken.id
+    const user = await User.findById(decodedToken?.id).select("-password -refreshToken");
 
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found" });
