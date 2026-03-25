@@ -1,61 +1,85 @@
 import mongoose from "mongoose";
 
 const shipmentSchema = new mongoose.Schema({
-    farmerId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    buyerId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    cropId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Crop', 
-    },
-    cropName:String,
-    quantity:{
-        type: Number,
-        required: true
-    },
-    agreedPrice: {
-        type: Number,
-        required: true
-    },
-    destination:{
-        address: String,
-        location: {
-            type:{
-                type: String,
-                enum : ["Point"],
-                default: "Point"
-            },
-            coordinates: [Number]
-        }
-    },
-    status:{
-        type: String,
-        enum:["created", "picked_up", "in_transit", "delivered", "delayed", "canceled"],
-        default : "created",
-        index: true
-    },
-    orderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Order"
-    },
-    truckId: String,
-    currentLocation:{
-        type:{
-        type: String,
-        enum: ["Point"],
-        default: "Point"
-    },
-    coordinates: {
-        type:[Number],
-        index:"2dsphere"
-    },
+  shipmentId: {
+    type: String,
+    unique: true,
+    index: true
+  },
+  // keep legacy naming alignment for order link
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order"
+  },
+  buyerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+  },
+  sellerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+  },
+  farmerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+  },
+  cropName:String,
+  quantity:{
+      type: Number,
+      required: true
+  },
+  transportationMode: {
+      type: String,
+      enum: ['self', 'platform'],
+      default: 'self'
+  },
+  status:{
+      type: String,
+      enum:["pending", "in_transit", "delivered", "created", "picked_up", "delayed", "canceled"],
+      default : "pending",
+      index: true
+  },
+  estimatedDelivery: Date,
+  currentLocation: { type: String, default: null },
+  trackingUpdates: [
+    {
+      timestamp: { type: Date, default: Date.now },
+      status: String,
+      location: String
+    }
+  ],
+  // legacy/optional fields retained for compatibility
+  cropId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Crop', 
+  },
+  agreedPrice: {
+      type: Number
+  },
+  destination:{
+      address: String,
+      location: {
+          type:{
+              type: String,
+              enum : ["Point"],
+              default: "Point"
+          },
+          coordinates: [Number]
+      }
+  },
+  truckId: String,
+  currentLocationGeo:{
+      type:{
+      type: String,
+      enum: ["Point"],
+      default: "Point"
+  },
+  coordinates: {
+      type:[Number],
+      index:"2dsphere"
+  },
 },
 locationHistory:[
  {
@@ -80,7 +104,6 @@ eta: Date,
     max: 100
   },
 
-  // Reserved fields for future AI/model integrations.
   aiInsights: {
     routeRiskScore: Number,
     etaConfidence: Number,
@@ -107,7 +130,6 @@ eta: Date,
       }
     }
   ]
-
 
 }, {timestamps: true})
 

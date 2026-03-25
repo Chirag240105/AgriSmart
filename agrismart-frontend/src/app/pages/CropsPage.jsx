@@ -24,6 +24,9 @@ export const CropsPage = () => {
     const [editingCrop, setEditingCrop] = useState(null);
     const [selectedCrop, setSelectedCrop] = useState(null);
     const [orderQuantity, setOrderQuantity] = useState(1);
+    const [transportMode, setTransportMode] = useState('self');
+    const [transportFee, setTransportFee] = useState(500);
+    const [shippingAddress, setShippingAddress] = useState('');
     const [orderLoading, setOrderLoading] = useState(false);
     const [locationLoading, setLocationLoading] = useState(false);
     const [locationError, setLocationError] = useState('');
@@ -312,14 +315,22 @@ export const CropsPage = () => {
             return;
         try {
             setOrderLoading(true);
-            const { data: order } = await api.post('/orders', {
+            // Create order on backend
+            const orderRes = await api.post('/api/orders', {
                 cropId: selectedCrop._id,
                 quantity: orderQuantity,
                 pricePerUnit: selectedCrop.pricePerUnit,
-                totalAmount: orderQuantity * selectedCrop.pricePerUnit,
+                totalAmount: orderQuantity * selectedCrop.pricePerUnit + (transportMode === 'platform' ? transportFee : 0),
+                transportationMode: transportMode,
+                transportFee: transportMode === 'platform' ? transportFee : 0,
+                transport_type: transportMode,
+                delivery_charge: transportMode === 'platform' ? transportFee : 0,
+                shippingAddress,
             });
-            const { data: paymentData } = await api.post('/payments/create-order', {
-                orderId: order._id,
+            const createdOrder = orderRes.data?.data?.order || orderRes.data?.data || orderRes.data;
+
+            const { data: paymentData } = await api.post('/api/payments/create-order', {
+                orderId: createdOrder?._id,
             });
             const options = {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -334,11 +345,11 @@ export const CropsPage = () => {
                 },
                 theme: { color: '#16a34a' },
                 handler: async (response) => {
-                    await api.post('/payments/verify', {
+                    await api.post('/api/payments/verify', {
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_payment_id: response.razorpay_payment_id,
                         razorpay_signature: response.razorpay_signature,
-                        orderId: order._id,
+                        orderId: createdOrder?._id,
                     });
                     toast.success('Order placed & payment successful! 🎉');
                     setSelectedCrop(null);
@@ -608,6 +619,7 @@ export const CropsPage = () => {
                   {user?.role === 'buyer' && (<Button className="w-full" onClick={() => {
                 setSelectedCrop(crop);
                 setOrderQuantity(1);
+                setShippingAddress('');
             }}>
                       {t('crops.placeOrder')}
                     </Button>)}
@@ -628,13 +640,47 @@ export const CropsPage = () => {
                 const safeValue = Math.max(1, Math.min(Number(selectedCrop.quantity) || 1, Number.isNaN(value) ? 1 : value));
                 setOrderQuantity(safeValue);
             }}/>
-              <p className="text-sm text-muted-foreground">{t('orders.total')}: ₹ {orderQuantity * selectedCrop.pricePerUnit}</p>
+            </div>
+            <div className="space-y-3 border rounded-md p-3">
+              <p className="font-semibold">Transportation</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 border rounded-md p-3 cursor-pointer">
+                  <input type="radio" name="transport" value="self" checked={transportMode === 'self'} onChange={() => setTransportMode('self')}/>
+                  <div>
+                    <p className="font-medium">I will arrange my own transport</p>
+                    <p className="text-sm text-muted-foreground">No extra charge</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 border rounded-md p-3 cursor-pointer">
+                  <input type="radio" name="transport" value="platform" checked={transportMode === 'platform'} onChange={() => setTransportMode('platform')}/>
+                  <div>
+                    <p className="font-medium">AgriSmart Logistics</p>
+                    <p className="text-sm text-muted-foreground">Delivery charge: ₹{transportFee}</p>
+                  </div>
+                </label>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Crop total: ₹{orderQuantity * selectedCrop.pricePerUnit}</p>
+                {transportMode === 'platform' && <p>Transport fee: ₹{transportFee}</p>}
+                <p className="font-semibold text-black">Grand total: ₹{orderQuantity * selectedCrop.pricePerUnit + (transportMode === 'platform' ? transportFee : 0)}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="shippingAddress">Delivery Address</Label>
+              <textarea
+                id="shippingAddress"
+                className="w-full rounded-md border p-2 text-sm"
+                rows={3}
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                placeholder="House, Street, City, Pincode"
+              />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setSelectedCrop(null)} disabled={orderLoading}>
+              <Button variant="outline" onClick={() => { setSelectedCrop(null); setShippingAddress(''); }} disabled={orderLoading}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handlePlaceOrder} disabled={orderLoading}>
+              <Button onClick={handlePlaceOrder} disabled={orderLoading || !shippingAddress.trim()}>
                 {orderLoading ? t('common.processing') : t('orders.confirmPay')}
               </Button>
             </div>

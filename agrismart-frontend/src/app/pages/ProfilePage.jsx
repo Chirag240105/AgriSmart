@@ -34,8 +34,8 @@ export const ProfilePage = () => {
         try {
             if (user?.role === 'farmer') {
                 const [cropsRes, ordersRes] = await Promise.all([
-                    api.get('/crops'),
-                    api.get('/orders'),
+                    api.get('/api/crops'),
+                    api.get('/api/orders'),
                 ]);
                 const crops = cropsRes.data?.crops || cropsRes.data || [];
                 const orders = ordersRes.data?.orders || ordersRes.data || [];
@@ -47,7 +47,7 @@ export const ProfilePage = () => {
                 });
             }
             else {
-                const ordersRes = await api.get('/orders');
+                const ordersRes = await api.get('/api/orders');
                 const orders = ordersRes.data?.orders || ordersRes.data || [];
                 setStats({
                     totalCrops: 0,
@@ -132,7 +132,7 @@ export const ProfilePage = () => {
     const fetchLoginHistory = async () => {
         setLoginHistoryLoading(true);
         try {
-            const res = await api.get('/users/login-history');
+            const res = await api.get('/api/users/login-history');
             setLoginHistory(res.data || []);
         }
         catch (_e) {
@@ -286,7 +286,9 @@ export const ProfilePage = () => {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Member Since</span>
-              <span className="font-medium">January 2024</span>
+              <span className="font-medium">
+                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Total Crops</span>

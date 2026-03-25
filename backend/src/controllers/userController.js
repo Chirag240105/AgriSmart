@@ -4,6 +4,11 @@ import { Order } from "../models/Order.models.js";
 import { Shipment } from "../models/Shipment.models.js";
 import uploadPromise from "../utils/cloudnary.js";
 
+// Simple login history placeholder to satisfy frontend route
+export const getLoginHistory = async (_req, res) => {
+  res.json([]);
+};
+
 export const getMe = async (req, res) => {
   res.json({ success: true, data: req.user });
 };

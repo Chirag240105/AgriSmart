@@ -1,5 +1,7 @@
 import { Order } from "../models/Order.models.js";
 import { Crop } from "../models/Crop.models.js";
+import { Shipment } from "../models/Shipment.models.js";
+import crypto from "crypto";
 
 export const createOrder = async (req, res) => {
   try {
@@ -7,7 +9,16 @@ export const createOrder = async (req, res) => {
       return res.status(403).json({ success: false, message: "Only buyers can create orders" });
     }
 
-    const { cropId, quantity, paymentMethod } = req.body;
+    const {
+      cropId,
+      quantity,
+      paymentMethod,
+      transportationMode = "self",
+      transportFee,
+      transport_type,
+      delivery_charge,
+      shippingAddress
+    } = req.body;
     if (!cropId || !quantity) {
       return res.status(400).json({ success: false, message: "cropId and quantity are required" });
     }
@@ -23,7 +34,16 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: "Requested quantity exceeds available quantity" });
     }
 
-    const totalAmount = Number(quantity) * Number(crop.pricePerUnit);
+    const resolvedTransportMode = transport_type || transportationMode || "self";
+    const resolvedTransportFee =
+      resolvedTransportMode === "platform"
+        ? (typeof delivery_charge === "number" ? delivery_charge :
+           typeof transportFee === "number" ? transportFee : 500)
+        : 0;
+
+    const baseAmount = Number(quantity) * Number(crop.pricePerUnit);
+    const transportCharge = resolvedTransportFee;
+    const totalAmount = baseAmount + transportCharge;
 
     const order = await Order.create({
       buyerId: req.user.id,
@@ -31,6 +51,11 @@ export const createOrder = async (req, res) => {
       quantity,
       pricePerUnit: crop.pricePerUnit,
       totalAmount,
+      transportFee: transportCharge,
+      transportationMode: resolvedTransportMode,
+      transport_type: resolvedTransportMode,
+      delivery_charge: transportCharge,
+      shippingAddress: shippingAddress || "",
       paymentMethod,
       status: "pending",
     });
@@ -41,7 +66,27 @@ export const createOrder = async (req, res) => {
     }
     await crop.save();
 
-    res.status(201).json({ success: true, data: order });
+    // Auto-create shipment linked to order
+    const shipment = await Shipment.create({
+      shipmentId: `SHP-${crypto.randomBytes(4).toString("hex")}`,
+      orderId: order._id,
+      buyerId: req.user.id,
+      sellerId: crop.farmerId,
+      farmerId: crop.farmerId,
+      cropName: crop.cropName,
+      quantity,
+      transportationMode: resolvedTransportMode,
+      status: "pending",
+      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      trackingUpdates: [{ status: "Order placed" }],
+      destination: shippingAddress ? { address: shippingAddress } : undefined,
+      currentLocation: shippingAddress || null,
+    });
+
+    order.shipmentId = shipment._id;
+    await order.save();
+
+    res.status(201).json({ success: true, data: { order, shipmentId: shipment.shipmentId } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -70,7 +115,9 @@ export const getMyOrders = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate("cropId").populate("shipmentId");
+    const order = await Order.findById(req.params.id)
+      .populate("cropId")
+      .populate("shipmentId");
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }

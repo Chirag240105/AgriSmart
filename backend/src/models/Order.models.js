@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema({
     },
     status:{
         type: String,
-        enum: ["pending", "paid", "failed"],
+        enum: ["pending", "paid", "failed", "refunded"],
         default: "pending"
     },
     paymentMethod: String,
@@ -38,6 +38,37 @@ const orderSchema = new mongoose.Schema({
     },
     refundId: {
         type: String        // Razorpay refund_id after refund is initiated
+    },
+    paidAt: {
+        type: Date
+    },
+    transportationMode: {
+        type: String,
+        enum: ['self', 'platform'],
+        default: 'self'
+    },
+    transportFee: {
+        type: Number,
+        default: 0
+    },
+    // alias fields for transport as requested
+    transport_type: {
+        type: String,
+        enum: ['self', 'platform'],
+        default: 'self'
+    },
+    delivery_charge: {
+        type: Number,
+        default: 0
+    },
+    shippingAddress: {
+        type: String,
+        default: ""
+    },
+    shipmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Shipment',
+        default: null
     }
 }, {timestamps: true})
 

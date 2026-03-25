@@ -1,29 +1,46 @@
 import crypto from 'crypto'
+import Razorpay from 'razorpay'
 import { Order } from '../models/Order.models.js'
 
-export const createPaymentOrder = async(req, res) =>{
-    try{
-        const {orderId } = req.body
+// Initialize Razorpay once using env credentials
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+})
 
-        const order = await Order.findById(orderId)
+export const createPaymentOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
 
-        if(!orderId)return res.status(404).json({message : 'Order not found'});
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId is required" });
+    }
 
-        
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status === "paid") {
+      return res.status(409).json({ message: "Order already paid", order });
+    }
+
     const razorpayOrder = await razorpay.orders.create({
       amount: order.totalAmount * 100,
-      currency: 'INR',
+      currency: "INR",
       receipt: `receipt_${orderId}`,
       notes: { orderId: orderId.toString() },
     });
 
-     res.json({
+    res.json({
+      success: true,
+      orderId: order._id,
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       key: process.env.RAZORPAY_KEY_ID,
     });
-    } catch (err) {
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
@@ -31,6 +48,19 @@ export const createPaymentOrder = async(req, res) =>{
 export const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId is required" });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status === "paid") {
+      return res.json({ message: "Payment already verified", order });
+    }
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
@@ -42,14 +72,25 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payment signature' });
     }
 
-    // Mark order as paid
-    await Order.findByIdAndUpdate(orderId, {
-      paymentStatus: 'paid',
-      paymentId: razorpay_payment_id,
-      razorpayOrderId: razorpay_order_id,
-    });
+    // Optional: verify the amount matches the order total
+    const razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    if (razorpayOrder?.amount !== order.totalAmount * 100) {
+      return res.status(400).json({ message: "Amount mismatch" });
+    }
 
-    res.json({ message: 'Payment verified successfully' });
+    // Mark order as paid
+    const updated = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        status: 'paid',
+        paymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        paidAt: new Date(),
+      },
+      { new: true }
+    );
+
+    res.json({ message: 'Payment verified successfully', order: updated });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -61,7 +102,7 @@ export const refundPayment = async (req, res) => {
     const { orderId } = req.body;
 
     const order = await Order.findById(orderId);
-    if (!order || order.paymentStatus !== 'paid') {
+    if (!order || order.status !== 'paid') {
       return res.status(400).json({ message: 'No paid payment found for this order' });
     }
 
@@ -69,7 +110,7 @@ export const refundPayment = async (req, res) => {
       amount: order.totalAmount * 100, // full refund; partial: pass custom amount
     });
 
-    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'refunded' });
+    await Order.findByIdAndUpdate(orderId, { status: 'refunded', refundId: refund.id });
 
     res.json({ message: 'Refund initiated', refundId: refund.id });
   } catch (err) {

@@ -65,9 +65,16 @@ export const createShipment = async (req, res) => {
 
 export const getShipmentById = async (req, res) => {
   try {
-    const shipment = await Shipment.findById(req.params.id)
-      .populate("farmerId", "name phone")
-      .populate("buyerId", "name phone");
+    const id = req.params.shipmentId || req.params.id;
+    const shipment =
+      (await Shipment.findOne({ shipmentId: id })
+        .populate("farmerId", "name phone")
+        .populate("buyerId", "name phone")
+        .populate("sellerId", "name phone")) ||
+      (await Shipment.findById(id)
+        .populate("farmerId", "name phone")
+        .populate("buyerId", "name phone")
+        .populate("sellerId", "name phone"));
 
     if (!shipment) return res.status(404).json({ success: false, message: "Shipment not found" });
 
@@ -101,7 +108,10 @@ export const getMyShipments = async (req, res) => {
 export const updateShipmentStatus = async (req, res) => {
   try {
     const { status, currentLocation, currentTemperature, eta } = req.body;
-    const shipment = await Shipment.findById(req.params.id);
+    const id = req.params.shipmentId || req.params.id;
+    const shipment =
+      (await Shipment.findOne({ shipmentId: id })) ||
+      (await Shipment.findById(id));
 
     if (!shipment) {
       return res.status(404).json({ success: false, message: "Shipment not found" });

@@ -12,7 +12,7 @@ const router = express.Router();
 router.use(protect);
 router.post("/", authorize("farmer"), createShipment);
 router.get("/", getMyShipments);
-router.get("/:id", getShipmentById);
-router.patch("/:id/status", authorize("farmer"), updateShipmentStatus);
+router.get("/:shipmentId", getShipmentById);
+router.patch("/:shipmentId", authorize("farmer"), updateShipmentStatus);
 
 export default router;
