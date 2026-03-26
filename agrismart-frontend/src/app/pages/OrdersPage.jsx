@@ -29,6 +29,7 @@ export const OrdersPage = () => {
             const byId = new Map();
             rawOrders.forEach((order) => {
                 if (!byId.has(order._id)) {
+                    const shipment = order.shipmentId;
                     byId.set(order._id, {
                         id: order._id,
                         _id: order._id,
@@ -40,7 +41,9 @@ export const OrdersPage = () => {
                         buyerId: order.buyerId,
                         transportFee: order.transportFee || order.delivery_charge || 0,
                         transportationMode: order.transportationMode || order.transport_type || 'self',
-                        shipmentId: order.shipmentId,
+                        shipmentId: shipment?._id || shipment?.shipmentId || shipment || null,
+                        shipment,
+                        shippingAddress: order.shippingAddress || shipment?.destination?.address || shipment?.currentLocation || '',
                         razorpayOrderId: order.razorpayOrderId,
                         paymentId: order.paymentId,
                     });
@@ -80,9 +83,10 @@ export const OrdersPage = () => {
                         razorpay_signature: response.razorpay_signature,
                         orderId: order._id,
                     });
-                    setOrders((prev) => prev.map((o) => o._id === order._id ? { ...o, status: 'paid' } : o));
                     toast.success('Payment successful!');
-                    fetchOrders();
+                    setOrders((prev) => prev.map((o) => o._id === order._id ? { ...o, status: 'paid' } : o));
+                   await fetchOrders()
+
                 },
             };
             if (!window.Razorpay) {
@@ -149,8 +153,10 @@ export const OrdersPage = () => {
                             <CardTitle>{order.cropName}</CardTitle>
                             <CardDescription>Order #{order.id}</CardDescription>
                         </div>
+                        
                         <Badge className={getStatusColor(order.status)}>
                             {t(`orders.status.${order.status}`)}
+                            
                         </Badge>
                     </div>
                 </CardHeader>
@@ -250,7 +256,8 @@ export const OrdersPage = () => {
                     <div className="space-y-2">
                       <p>Order Date: {new Date(selectedOrder.createdAt).toLocaleString()}</p>
                       {selectedOrder.razorpayOrderId && <p>Transaction ID: {selectedOrder.razorpayOrderId}</p>}
-                      {selectedOrder.shipmentId && <p>Shipment: {String(selectedOrder.shipmentId)}</p>}
+                      {selectedOrder.shipmentId && <p>Shipment ID: {selectedOrder.shipmentId}</p>}
+                      <p>Shipping Address: {selectedOrder.shippingAddress || 'Not provided'}</p>
                     </div>
                   </div>
                 ) : <p className="text-muted-foreground">Select an order to view details</p>}

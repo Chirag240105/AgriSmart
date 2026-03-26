@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 export const CropsPage = () => {
     const { user } = useAuth();
     const { t } = useTranslation();
+    const geoCacheRef = useRef(new Map());
     const [crops, setCrops] = useState([]);
     const [filteredCrops, setFilteredCrops] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -46,6 +47,29 @@ export const CropsPage = () => {
         locationLng: '',
     });
     useEffect(() => {
+        const reverseGeocode = async (lat, lng) => {
+            const key = `${lat},${lng}`;
+            const cache = geoCacheRef.current;
+            if (cache.has(key))
+                return cache.get(key);
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                const data = await res.json();
+                const name = [
+                    data.address?.village || data.address?.town || data.address?.city,
+                    data.address?.state_district || data.address?.county,
+                    data.address?.state,
+                ].filter(Boolean).join(', ') || data.display_name;
+                const value = name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                cache.set(key, value);
+                return value;
+            }
+            catch {
+                const fallback = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                cache.set(key, fallback);
+                return fallback;
+            }
+        };
         const fetchCrops = async () => {
             try {
                 const response = await cropService.getAllCrops();
@@ -72,7 +96,14 @@ export const CropsPage = () => {
                         locationLng: typeof lng === 'number' ? lng : undefined,
                     };
                 });
-                setCrops(mapped);
+                const withAddresses = await Promise.all(mapped.map(async (crop) => {
+                    if (typeof crop.locationLat === 'number' && typeof crop.locationLng === 'number') {
+                        const pretty = await reverseGeocode(crop.locationLat, crop.locationLng);
+                        return { ...crop, location: pretty };
+                    }
+                    return crop;
+                }));
+                setCrops(withAddresses);
             }
             catch (error) {
                 toast.error(error?.response?.data?.message || 'Failed to load crops');

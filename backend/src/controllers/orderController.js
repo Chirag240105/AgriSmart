@@ -60,10 +60,9 @@ export const createOrder = async (req, res) => {
       status: "pending",
     });
 
-    crop.availableQuantity -= Number(quantity);
-    if (crop.availableQuantity <= 0) {
-      crop.status = "sold";
-    }
+    // Mark crop as sold immediately after an order is placed
+    crop.availableQuantity = Math.max(0, crop.availableQuantity - Number(quantity));
+    crop.status = "sold";
     await crop.save();
 
     // Auto-create shipment linked to order

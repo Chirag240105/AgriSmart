@@ -20,13 +20,17 @@ export const ShipmentsPage = () => {
                     const coordinates = shipment.currentLocation?.coordinates;
                     const locationText = Array.isArray(coordinates)
                         ? `${coordinates[1].toFixed(4)}, ${coordinates[0].toFixed(4)}`
-                        : shipment.destination?.address || 'Unknown';
+                        : typeof shipment.currentLocation === 'string'
+                            ? shipment.currentLocation
+                            : shipment.currentLocation?.address
+                                || shipment.destination?.address
+                                || 'Unknown';
                     return {
                         id: shipment._id,
                         orderId: shipment.orderId,
                         status: shipment.status || 'created',
                         currentLocation: locationText,
-                        eta: shipment.eta,
+                        eta: shipment.eta || shipment.estimatedDelivery,
                         locationHistory: shipment.locationHistory,
                     };
                 });
@@ -52,13 +56,17 @@ export const ShipmentsPage = () => {
             const coordinates = shipment?.currentLocation?.coordinates;
             const locationText = Array.isArray(coordinates)
                 ? `${coordinates[1].toFixed(4)}, ${coordinates[0].toFixed(4)}`
-                : shipment?.destination?.address || 'Unknown';
+                : typeof shipment?.currentLocation === 'string'
+                    ? shipment.currentLocation
+                    : shipment?.currentLocation?.address
+                        || shipment?.destination?.address
+                        || 'Unknown';
             setTrackedShipment({
                 id: shipment._id,
                 orderId: shipment.orderId,
                 status: shipment.status || 'created',
                 currentLocation: locationText,
-                eta: shipment.eta,
+                eta: shipment.eta || shipment.estimatedDelivery,
                 locationHistory: shipment.locationHistory,
             });
         }
@@ -89,7 +97,7 @@ export const ShipmentsPage = () => {
               <p className="text-sm text-muted-foreground">
                 {Array.isArray(update.coordinates)
                     ? `${update.coordinates[1].toFixed(4)}, ${update.coordinates[0].toFixed(4)}`
-                    : 'Unknown'}
+                    : update.location || 'Unknown'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {update.timestamp || update.timestamps
