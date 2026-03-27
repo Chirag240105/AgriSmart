@@ -2,10 +2,20 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { Order } from "../models/Order.models.js";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Lazy initialization to ensure env vars are loaded
+let razorpay = null;
+const getRazorpay = () => {
+  if (!razorpay) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      throw new Error("Razorpay credentials not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env");
+    }
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return razorpay;
+};
 
 export const createPaymentOrder = async (req, res) => {
   try {
@@ -17,7 +27,7 @@ export const createPaymentOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    const razorpayOrder = await razorpay.orders.create({
+    const razorpayOrder = await getRazorpay().orders.create({
       amount: order.totalAmount * 100,
       currency: "INR",
       receipt: `receipt_${orderId}`,
@@ -74,7 +84,7 @@ export const refundPayment = async (req, res) => {
       return res.status(400).json({ message: 'No paid payment found for this order' });
     }
 
-    const refund = await razorpay.payments.refund(order.paymentId, {
+    const refund = await getRazorpay().payments.refund(order.paymentId, {
       amount: order.totalAmount * 100, // full refund; partial: pass custom amount
     });
 
@@ -94,15 +104,17 @@ export const payoutToFarmer = async (req, res) => {
   try {
     const { farmerId, amount, accountNumber, ifscCode, farmerName } = req.body;
 
+    const razorpayInstance = getRazorpay();
+
     // Step 1 — create contact
-    const contact = await razorpay.contacts.create({
+    const contact = await razorpayInstance.contacts.create({
       name: farmerName,
       type: 'vendor',
       reference_id: farmerId,
     });
 
     // Step 2 — create fund account
-    const fundAccount = await razorpay.fundAccount.create({
+    const fundAccount = await razorpayInstance.fundAccount.create({
       contact_id: contact.id,
       account_type: 'bank_account',
       bank_account: {
@@ -113,7 +125,7 @@ export const payoutToFarmer = async (req, res) => {
     });
 
     // Step 3 — create payout
-    const payout = await razorpay.payouts.create({
+    const payout = await razorpayInstance.payouts.create({
       account_number: process.env.RAZORPAY_ACCOUNT_NUMBER, // your Razorpay X account
       fund_account_id: fundAccount.id,
       amount: amount * 100,
