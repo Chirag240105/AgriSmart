@@ -102,8 +102,7 @@ venv.bak/
 # Machine Learning Models & Data
 # ============================================
 # Keep small models, ignore large ones
-*.h5
-*.pkl
+# Large model files (keep small essential models)
 *.pth
 *.pt
 *.onnx
@@ -117,7 +116,9 @@ ml-server/model_config.pkl
 ml-server/model_config_real.pkl
 ml-server/label_encoders.pkl
 ml-server/encoders.pkl
-ml-server/plant_disease_model.h5
+# ml-server/plant_disease_model.h5  # Commented out to allow pushing
+# *.h5  # Commented out to allow .h5 files
+# *.pkl  # Commented out to allow .pkl files
 
 # Processed data files (keep raw data, ignore processed)
 ml-server/data/*.csv
