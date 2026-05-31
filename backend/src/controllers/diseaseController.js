@@ -1,12 +1,35 @@
+import { v2 as cloudinary } from "cloudinary";
 import { Crop } from "../models/Crop.models.js";
 import { CropHealth } from "../models/CropHealth.models.js";
 import { detectDiseaseFromImage } from "../services/diseaseDetectionService.js";
 
 export const detectCropDisease = async (req, res) => {
   try {
-    const { cropId, imageUrl } = req.body;
-    if (!cropId || !imageUrl) {
-      return res.status(400).json({ success: false, message: "cropId and imageUrl are required" });
+    const { cropId } = req.body;
+
+    if (!cropId) {
+      return res.status(400).json({ success: false, message: "cropId is required" });
+    }
+
+    // Get imageUrl either from body or by uploading file to Cloudinary
+    let imageUrl = req.body.imageUrl;
+
+    if (!imageUrl && req.file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "agrismart/disease", resource_type: "image" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+      imageUrl = uploadResult.secure_url;
+    }
+
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, message: "imageUrl is required" });
     }
 
     const crop = await Crop.findById(cropId);
@@ -17,7 +40,11 @@ export const detectCropDisease = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized for this crop" });
     }
 
-    const result = await detectDiseaseFromImage({ imageUrl });
+    const result = await detectDiseaseFromImage({
+      imageUrl,
+      cropName: crop.cropName,
+    });
+
     const record = await CropHealth.create({
       farmerId: req.user.id,
       cropId,
@@ -28,8 +55,21 @@ export const detectCropDisease = async (req, res) => {
       status: "pending",
     });
 
-    res.status(201).json({ success: true, data: record });
+    res.status(201).json({
+      success: true,
+      data: {
+        ...record._doc,
+        affectedCrop: result.affectedCrop,
+        severity: result.severity,
+        description: result.description,
+        prevention: result.prevention,
+        top3Predictions: result.top3Predictions,
+        isHealthy: result.isHealthy,
+        source: result.source,
+      },
+    });
   } catch (err) {
+    console.error("Disease controller error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };

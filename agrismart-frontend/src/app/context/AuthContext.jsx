@@ -55,6 +55,10 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('agrismart_token');
         localStorage.removeItem('agrismart_user');
     };
+    const updateUser = (updatedUser) => {
+        setUser(updatedUser);
+        localStorage.setItem('agrismart_user', JSON.stringify(updatedUser));
+    };
     return (<AuthContext.Provider value={{
             user,
             token,
@@ -62,6 +66,7 @@ export const AuthProvider = ({ children }) => {
             login,
             register,
             logout,
+            updateUser,
             isLoading,
         }}>
       {children}

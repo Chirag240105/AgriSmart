@@ -27,9 +27,18 @@ const userSchema = new mongoose.Schema({
         default: "",
     },
     phone: {
-        type: String
+        type: String,
+        default: '',
     },
- location: {
+    bio: {
+        type: String,
+        default: '',
+    },
+    locationText: {
+        type: String,
+        default: '',
+    },
+    location: {
   type: {
     type: String,
     enum: ['Point'],

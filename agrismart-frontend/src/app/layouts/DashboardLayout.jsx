@@ -1,41 +1,60 @@
-import { useState } from 'react';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Home, Leaf, ShoppingCart, Package, Cloud, TrendingUp, AlertCircle, MessageSquare, User, Menu, X, LogOut, Sun, Moon, } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { Button } from '../components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { useTheme } from 'next-themes';
-import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+import {
+  AlertCircle,
+  Cloud,
+  Home,
+  Leaf,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Moon,
+  Package,
+  ShoppingCart,
+  Sun,
+  TrendingUp,
+  User,
+  X,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+
 export const DashboardLayout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { theme, setTheme } = useTheme();
-    const { t } = useTranslation();
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
-    const menuItems = [
-        { icon: Home, label: t('nav.dashboard'), path: '/dashboard' },
-        { icon: Leaf, label: t('nav.crops'), path: '/crops' },
-        { icon: ShoppingCart, label: t('nav.orders'), path: '/orders' },
-        { icon: Package, label: t('nav.shipments'), path: '/shipments' },
-        { icon: Cloud, label: t('nav.weather'), path: '/weather' },
-        { icon: TrendingUp, label: t('nav.prices'), path: '/prices' },
-        { icon: AlertCircle, label: t('nav.disease'), path: '/disease' },
-        { icon: MessageSquare, label: t('nav.chatbot'), path: '/chatbot' },
-        { icon: User, label: t('nav.profile'), path: '/profile' },
-    ];
-    return (<div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Mobile Header */}
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { theme, setTheme } = useTheme();
+  const { t } = useTranslation();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const menuItems = [
+    { icon: Home, label: t("nav.dashboard", "Dashboard"), path: "/dashboard" },
+    { icon: Leaf, label: t("nav.crops", "Crops"), path: "/crops" },
+    { icon: ShoppingCart, label: t("nav.orders", "Orders"), path: "/orders" },
+    { icon: Package, label: t("nav.shipments", "Shipments"), path: "/shipments" },
+    { icon: Cloud, label: t("nav.weather", "Weather"), path: "/weather" },
+    { icon: TrendingUp, label: t("nav.prices", "Prices"), path: "/prices" },
+    { icon: AlertCircle, label: t("nav.disease", "Disease Detection"), path: "/disease" },
+    { icon: MessageSquare, label: t("nav.chatbot", "AI Assistant"), path: "/chatbot" },
+    { icon: User, label: t("nav.profile", "Profile"), path: "/profile" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <Leaf className="w-8 h-8 text-primary"/>
+            <Leaf className="w-8 h-8 text-primary" />
             <span className="text-xl font-bold text-primary">AgriSmart</span>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -44,19 +63,19 @@ export const DashboardLayout = () => {
         </div>
       </div>
 
-      {/* Sidebar */}
-      <aside className={`
+      <aside
+        className={`
           fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 
           transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
-        `}>
+        `}
+      >
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-white"/>
+                <Leaf className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">AgriSmart</h1>
@@ -65,66 +84,73 @@ export const DashboardLayout = () => {
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (<Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} className={`
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all
-                    ${isActive
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}
-                  `}>
-                  <item.icon className="w-5 h-5"/>
+                    ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }
+                  `}
+                >
+                  <item.icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
-                </Link>);
-        })}
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* User Profile */}
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">
               <Avatar>
-                <AvatarImage src={user?.profileImage}/>
+                <AvatarImage src={user?.profileImage} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
                   {user?.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                  {user?.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user?.email}
-                </p>
+                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
               </div>
             </div>
             <Button variant="outline" className="w-full justify-start gap-2" onClick={handleLogout}>
-              <LogOut className="w-4 h-4"/>
-              {t('nav.logout')}
+              <LogOut className="w-4 h-4" />
+              {t("nav.logout", "Logout")}
             </Button>
           </div>
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (<div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)}/>)}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-      {/* Main Content */}
       <div className="lg:ml-64 pt-16 lg:pt-0">
         <header className="hidden lg:flex items-center justify-between p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {t('dashboard.welcomeBack')}, {user?.name}! 👋
+              {t("dashboard.welcomeBack", "Welcome back")}, {user?.name}!
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('dashboard.manageOps')}
+              {t("dashboard.manageOps", "Manage your agricultural operations with ease")}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {theme === 'dark' ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
           </div>
         </header>
@@ -135,5 +161,6 @@ export const DashboardLayout = () => {
           </motion.div>
         </main>
       </div>
-    </div>);
+    </div>
+  );
 };

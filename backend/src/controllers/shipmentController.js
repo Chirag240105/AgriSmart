@@ -1,5 +1,5 @@
-import { Shipment } from "../models/Shipment.models.js";
 import { Order } from "../models/Order.models.js";
+import { Shipment } from "../models/Shipment.models.js";
 import { pathwayService } from "../config/pathway.js";
 
 export const createShipment = async (req, res) => {
@@ -10,7 +10,9 @@ export const createShipment = async (req, res) => {
 
     const { orderId, cropId, cropName, quantity, agreedPrice, buyerId, destination, truckId } = req.body;
     if (!buyerId || !quantity || !agreedPrice) {
-      return res.status(400).json({ success: false, message: "buyerId, quantity and agreedPrice are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "buyerId, quantity and agreedPrice are required" });
     }
 
     let linkedOrder = null;
@@ -45,7 +47,6 @@ export const createShipment = async (req, res) => {
 
     await shipment.save();
 
-    // AI/Pathway integration hook: safe no-op until provider is integrated.
     await pathwayService.startShipmentMonitoring(shipment._id, {
       farmerId: shipment.farmerId,
       buyerId: shipment.buyerId,
@@ -82,7 +83,6 @@ export const getShipmentById = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
-    // AI/Pathway integration hook: merge live telemetry when enabled.
     const liveData = await pathwayService.getShipmentLiveData(shipment._id);
     const shipmentObj = shipment.toObject();
     if (liveData) {
@@ -109,9 +109,7 @@ export const updateShipmentStatus = async (req, res) => {
   try {
     const { status, currentLocation, currentTemperature, eta } = req.body;
     const id = req.params.shipmentId || req.params.id;
-    const shipment =
-      (await Shipment.findOne({ shipmentId: id })) ||
-      (await Shipment.findById(id));
+    const shipment = (await Shipment.findOne({ shipmentId: id })) || (await Shipment.findById(id));
 
     if (!shipment) {
       return res.status(404).json({ success: false, message: "Shipment not found" });

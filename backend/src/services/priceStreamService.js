@@ -1,13 +1,19 @@
+import axios from "axios";
 import { PricePrediction } from "../models/Price.models.js";
 
-const STREAM_INTERVAL_MS = 5000;
+const ML_SERVER_URL = process.env.ML_SERVER_URL || "http://localhost:5001";
+const STREAM_INTERVAL_MS = Number(process.env.PRICE_STREAM_INTERVAL_MS) || 30000;
 
 const mandiDataset = [
-  { cropName: "Wheat", basePrice: 2200, trend: "increase", location: [77.209, 28.6139] },
-  { cropName: "Rice", basePrice: 2450, trend: "stable", location: [72.8777, 19.076] },
-  { cropName: "Maize", basePrice: 1980, trend: "decrease", location: [88.3639, 22.5726] },
-  { cropName: "Potato", basePrice: 1650, trend: "increase", location: [80.9462, 26.8467] },
-  { cropName: "Tomato", basePrice: 1400, trend: "stable", location: [78.4867, 17.385] },
+  { cropName: "Wheat", basePrice: 2200, trend: "increase", location: [77.209, 28.6139], state: "Punjab" },
+  { cropName: "Rice", basePrice: 2450, trend: "stable", location: [72.8777, 19.076], state: "West Bengal" },
+  { cropName: "Maize", basePrice: 1980, trend: "decrease", location: [88.3639, 22.5726], state: "Karnataka" },
+  { cropName: "Potato", basePrice: 1650, trend: "increase", location: [80.9462, 26.8467], state: "Uttar Pradesh" },
+  { cropName: "Tomato", basePrice: 1400, trend: "stable", location: [78.4867, 17.385], state: "Andhra Pradesh" },
+  { cropName: "Onion", basePrice: 1500, location: [73.8567, 18.5204], state: "Maharashtra" },
+  { cropName: "Soybean", basePrice: 4600, location: [75.8577, 22.7196], state: "Madhya Pradesh" },
+  { cropName: "Cotton", basePrice: 6620, location: [72.5714, 23.0225], state: "Gujarat" },
+  { cropName: "Chilli", basePrice: 8000, location: [78.4867, 17.385], state: "Andhra Pradesh" },
 ];
 
 let timerRef = null;
@@ -19,19 +25,79 @@ const nextTrend = (value) => {
   return "stable";
 };
 
-const generateForecast = (row) => {
-  const randomSwing = Number((Math.random() * 140 - 70).toFixed(2));
-  const predictedPrice = Math.max(100, Number((row.basePrice + randomSwing).toFixed(2)));
+const fetchMLPrediction = async (crop, state, weatherData = null) => {
+  try {
+    const response = await axios.post(
+      `${ML_SERVER_URL}/predict-price`,
+      {
+        crop,
+        state,
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+        rainfall_mm: weatherData?.rainfall || 100,
+        temperature_c: weatherData?.temperature || 30,
+        demand_index: 1.0 + (Math.random() * 0.2 - 0.1),
+        inflation_rate: 5.5,
+      },
+      { timeout: 5000 }
+    );
 
-  // TODO(ai-model): Call your forecasting model here and replace simulated values.
-  const confidence = Number((0.55 + Math.random() * 0.4).toFixed(2));
-  const trend = nextTrend((predictedPrice - row.basePrice) / row.basePrice);
+    if (response.data.success) {
+      return response.data.data;
+    }
+  } catch (error) {
+    console.error(`ML prediction failed for ${crop}:`, error.message);
+  }
+  return null;
+};
+
+const generateForecast = async (row) => {
+  const mlPrediction = row.state ? await fetchMLPrediction(row.cropName, row.state) : null;
+
+  if (mlPrediction) {
+    return {
+      predictedPrice: mlPrediction.predicted_price,
+      confidence: mlPrediction.confidence,
+      trend: mlPrediction.trend,
+      insights: mlPrediction.insights,
+      source: "ml_model",
+      historicalPrices: [
+        { date: new Date(Date.now() - 86400000 * 2), price: row.basePrice - 30 },
+        { date: new Date(Date.now() - 86400000), price: row.basePrice - 10 },
+        { date: new Date(), price: row.basePrice },
+      ],
+    };
+  }
+
+  const month = new Date().getMonth() + 1;
+  const seasonalFactors = {
+    1: 1.02,
+    2: 1.05,
+    3: 1.08,
+    4: 1.05,
+    5: 0.95,
+    6: 0.88,
+    7: 0.85,
+    8: 0.9,
+    9: 0.95,
+    10: 0.98,
+    11: 1.0,
+    12: 1.03,
+  };
+
+  const seasonalFactor = seasonalFactors[month] || 1.0;
+  const inflationFactor = 1 + (new Date().getFullYear() - 2020) * 0.055;
+  const noise = 1 + (Math.random() - 0.5) * 0.06;
+
+  const predictedPrice = Math.round(row.basePrice * seasonalFactor * inflationFactor * noise);
+  const trend = predictedPrice > row.basePrice * 1.02 ? "increase" : predictedPrice < row.basePrice * 0.98 ? "decrease" : "stable";
 
   return {
     predictedPrice,
-    confidence,
+    confidence: 0.65,
     trend,
-    insights: `Predicted ${trend} movement from recent mandi trend.`,
+    insights: `${row.cropName} showing ${trend} trend based on seasonal patterns.`,
+    source: "algorithmic",
     historicalPrices: [
       { date: new Date(Date.now() - 86400000), price: row.basePrice - 20 },
       { date: new Date(Date.now() - 43200000), price: row.basePrice + 15 },
@@ -43,7 +109,8 @@ const generateForecast = (row) => {
 export const pushNextPricePoint = async () => {
   const row = mandiDataset[cursor % mandiDataset.length];
   cursor += 1;
-  const forecast = generateForecast(row);
+
+  const forecast = await generateForecast(row);
 
   const record = await PricePrediction.create({
     cropName: row.cropName,
@@ -51,23 +118,25 @@ export const pushNextPricePoint = async () => {
       type: "Point",
       coordinates: row.location,
     },
+    state: row.state,
     date: new Date(),
     predictedPrice: forecast.predictedPrice,
     unit: "quintal",
     confidance: forecast.confidence,
     trend: forecast.trend,
     insights: forecast.insights,
+    source: forecast.source,
     historicalPrices: forecast.historicalPrices,
   });
 
+  console.log(`[PriceStream] ${row.cropName}: ${forecast.predictedPrice}/q (${forecast.trend}) [${forecast.source}]`);
   return record;
 };
 
 export const startPriceStream = () => {
-  if (timerRef) {
-    return;
-  }
+  if (timerRef) return;
 
+  console.log("Starting ML-powered price stream...");
   timerRef = setInterval(async () => {
     try {
       await pushNextPricePoint();
@@ -78,9 +147,8 @@ export const startPriceStream = () => {
 };
 
 export const stopPriceStream = () => {
-  if (!timerRef) {
-    return;
-  }
+  if (!timerRef) return;
   clearInterval(timerRef);
   timerRef = null;
+  console.log("Price stream stopped");
 };

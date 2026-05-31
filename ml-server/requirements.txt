@@ -1,0 +1,14 @@
+Flask
+Flask-Cors
+python-dotenv
+requests
+numpy<2.0
+pandas
+Pillow
+groq
+joblib
+scikit-learn
+xgboost
+h5py>=3.10
+google-generativeai
+tensorflow==2.15.0

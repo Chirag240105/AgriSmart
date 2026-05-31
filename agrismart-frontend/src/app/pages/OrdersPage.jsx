@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Package, Calendar, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -71,10 +71,7 @@ export const OrdersPage = () => {
                 name: 'AgriSmart',
                 description: 'Crop Order Payment',
                 order_id: data.razorpayOrderId,
-                prefill: {
-                    name: user?.name,
-                    email: user?.email,
-                },
+                prefill: { name: user?.name, email: user?.email },
                 theme: { color: '#16a34a' },
                 handler: async (response) => {
                     await verifyPayment({
@@ -85,8 +82,7 @@ export const OrdersPage = () => {
                     });
                     toast.success('Payment successful!');
                     setOrders((prev) => prev.map((o) => o._id === order._id ? { ...o, status: 'paid' } : o));
-                   await fetchOrders()
-
+                    await fetchOrders();
                 },
             };
             if (!window.Razorpay) {
@@ -122,30 +118,18 @@ export const OrdersPage = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'paid':
-                return 'bg-green-100 text-green-700';
-            case 'failed':
-                return 'bg-red-100 text-red-700';
-            case 'refunded':
-                return 'bg-blue-100 text-blue-700';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-700';
-            default:
-                return 'bg-gray-100 text-gray-700';
+            case 'paid': return 'bg-green-100 text-green-700';
+            case 'failed': return 'bg-red-100 text-red-700';
+            case 'refunded': return 'bg-blue-100 text-blue-700';
+            case 'pending': return 'bg-yellow-100 text-yellow-700';
+            default: return 'bg-gray-100 text-gray-700';
         }
     };
 
-    const filterByStatus = (status) => {
-        if (!status) return orders;
-        return orders.filter((order) => order.status === status);
-    };
+    const filterByStatus = (status) => orders.filter((order) => order.status === status);
 
     const OrderCard = ({ order, index }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
             <Card>
                 <CardHeader>
                     <div className="flex items-start justify-between">
@@ -153,10 +137,8 @@ export const OrdersPage = () => {
                             <CardTitle>{order.cropName}</CardTitle>
                             <CardDescription>Order #{order.id}</CardDescription>
                         </div>
-                        
                         <Badge className={getStatusColor(order.status)}>
                             {t(`orders.status.${order.status}`)}
-                            
                         </Badge>
                     </div>
                 </CardHeader>
@@ -193,26 +175,16 @@ export const OrdersPage = () => {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => {
-                            setSelectedOrder(order);
-                            setDetailOpen(true);
-                        }}>
+                        <Button variant="outline" className="flex-1" onClick={() => { setSelectedOrder(order); setDetailOpen(true); }}>
                             {t('orders.viewDetails')}
                         </Button>
                         {user?.role !== 'farmer' && order.status === 'pending' && (
-                            <Button
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                                onClick={() => handlePayment(order)}
-                            >
+                            <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handlePayment(order)}>
                                 {t('orders.payNow')}
                             </Button>
                         )}
                         {user?.role !== 'farmer' && order.status === 'paid' && (
-                            <Button
-                                variant="outline"
-                                className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                                onClick={() => handleRefund(order._id)}
-                            >
+                            <Button variant="outline" className="flex-1 text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleRefund(order._id)}>
                                 {t('orders.refund')}
                             </Button>
                         )}
@@ -238,30 +210,32 @@ export const OrdersPage = () => {
             </div>
 
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Order Details</DialogTitle>
-                </DialogHeader>
-                {selectedOrder ? (
-                  <div className="grid md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <p className="font-semibold">{selectedOrder.cropName}</p>
-                      <p>Order ID: {selectedOrder.id}</p>
-                      <p>Quantity: {selectedOrder.quantity}</p>
-                      <p>Price per unit: ₹{selectedOrder.totalAmount / selectedOrder.quantity}</p>
-                      <p>Total: ₹{selectedOrder.totalAmount}</p>
-                      <p>Transport: {selectedOrder.transportationMode === 'platform' ? 'AgriSmart Logistics' : 'Self'} (₹{selectedOrder.transportFee || 0})</p>
-                      <p>Payment Status: <span className={`inline-flex px-2 py-1 rounded ${getStatusColor(selectedOrder.status)}`}>{selectedOrder.status}</span></p>
-                    </div>
-                    <div className="space-y-2">
-                      <p>Order Date: {new Date(selectedOrder.createdAt).toLocaleString()}</p>
-                      {selectedOrder.razorpayOrderId && <p>Transaction ID: {selectedOrder.razorpayOrderId}</p>}
-                      {selectedOrder.shipmentId && <p>Shipment ID: {selectedOrder.shipmentId}</p>}
-                      <p>Shipping Address: {selectedOrder.shippingAddress || 'Not provided'}</p>
-                    </div>
-                  </div>
-                ) : <p className="text-muted-foreground">Select an order to view details</p>}
-              </DialogContent>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Order Details</DialogTitle>
+                    </DialogHeader>
+                    {selectedOrder ? (
+                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-2">
+                                <p className="font-semibold">{selectedOrder.cropName}</p>
+                                <p>Order ID: {selectedOrder.id}</p>
+                                <p>Quantity: {selectedOrder.quantity}</p>
+                                <p>Price per unit: INR {(selectedOrder.totalAmount / selectedOrder.quantity).toFixed(2)}</p>
+                                <p>Total: INR {selectedOrder.totalAmount}</p>
+                                <p>Transport: {selectedOrder.transportationMode === 'platform' ? 'AgriSmart Logistics' : 'Self'} (INR {selectedOrder.transportFee || 0})</p>
+                                <p>Payment Status: <span className={`inline-flex px-2 py-1 rounded ${getStatusColor(selectedOrder.status)}`}>{selectedOrder.status}</span></p>
+                            </div>
+                            <div className="space-y-2">
+                                <p>Order Date: {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                                {selectedOrder.razorpayOrderId && <p>Transaction ID: {selectedOrder.razorpayOrderId}</p>}
+                                {selectedOrder.shipmentId && <p>Shipment ID: {selectedOrder.shipmentId}</p>}
+                                <p>Shipping Address: {selectedOrder.shippingAddress || 'Not provided'}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">Select an order to view details</p>
+                    )}
+                </DialogContent>
             </Dialog>
 
             <Tabs defaultValue="all" className="space-y-6">
@@ -271,36 +245,24 @@ export const OrdersPage = () => {
                     <TabsTrigger value="paid">{t('orders.status.paid')}</TabsTrigger>
                     <TabsTrigger value="failed">{t('orders.status.failed')}</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="all" className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-6">
-                        {orders.map((order, index) => (
-                            <OrderCard key={order.id} order={order} index={index} />
-                        ))}
+                        {orders.map((order, index) => <OrderCard key={order.id} order={order} index={index} />)}
                     </div>
                 </TabsContent>
-
                 <TabsContent value="pending" className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-6">
-                        {filterByStatus('pending').map((order, index) => (
-                            <OrderCard key={order.id} order={order} index={index} />
-                        ))}
+                        {filterByStatus('pending').map((order, index) => <OrderCard key={order.id} order={order} index={index} />)}
                     </div>
                 </TabsContent>
-
                 <TabsContent value="paid" className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-6">
-                        {filterByStatus('paid').map((order, index) => (
-                            <OrderCard key={order.id} order={order} index={index} />
-                        ))}
+                        {filterByStatus('paid').map((order, index) => <OrderCard key={order.id} order={order} index={index} />)}
                     </div>
                 </TabsContent>
-
-                    <TabsContent value="failed" className="space-y-4">
+                <TabsContent value="failed" className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-6">
-                        {filterByStatus('failed').map((order, index) => (
-                            <OrderCard key={order.id} order={order} index={index} />
-                        ))}
+                        {filterByStatus('failed').map((order, index) => <OrderCard key={order.id} order={order} index={index} />)}
                     </div>
                 </TabsContent>
             </Tabs>

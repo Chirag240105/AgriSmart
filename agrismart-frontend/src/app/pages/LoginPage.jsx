@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Leaf, Mail, Lock, AlertCircle, EyeOff, Eye } from 'lucide-react';
@@ -38,7 +38,6 @@ export const LoginPage = () => {
             await login(email, password);
             toast.success('Login successful!');
             navigate('/dashboard');
-            console.log(email);
         }
         catch (err) {
             const message = err?.response?.data?.message ||

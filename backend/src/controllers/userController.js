@@ -1,10 +1,9 @@
-import { User } from "../models/User.models.js";
 import { Crop } from "../models/Crop.models.js";
 import { Order } from "../models/Order.models.js";
 import { Shipment } from "../models/Shipment.models.js";
+import { User } from "../models/User.models.js";
 import uploadPromise from "../utils/cloudnary.js";
 
-// Simple login history placeholder to satisfy frontend route
 export const getLoginHistory = async (_req, res) => {
   res.json([]);
 };
@@ -15,7 +14,6 @@ export const getMe = async (req, res) => {
 
 export const updateMe = async (req, res) => {
   try {
-    // Password change flow
     if (req.body.currentPassword || req.body.newPassword) {
       const { currentPassword, newPassword } = req.body;
       if (!currentPassword || !newPassword) {
@@ -45,7 +43,7 @@ export const updateMe = async (req, res) => {
       return res.json({ success: true, message: "Password updated successfully" });
     }
 
-    const allowedFields = ["name", "phone", "preferences", "farmDetails"];
+    const allowedFields = ["name", "phone", "bio", "locationText", "preferences", "farmDetails"];
     const updatePayload = {};
 
     for (const key of allowedFields) {
@@ -69,7 +67,6 @@ export const deleteMe = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Delete related data
     const userCrops = await Crop.find({ farmerId: userId }).select("_id");
     const userCropIds = userCrops.map((c) => c._id);
 
@@ -94,14 +91,10 @@ export const deleteMe = async (req, res) => {
 export const uploadProfileImage = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No file uploaded",
-      });
+      return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    
-    const result = await uploadPromise;
+    const result = await uploadPromise(req.file.buffer, "agrismart/profiles");
     const imageUrl = result.secure_url;
 
     const user = await User.findByIdAndUpdate(
@@ -110,15 +103,8 @@ export const uploadProfileImage = async (req, res) => {
       { new: true }
     ).select("-password");
 
-    res.json({
-      success: true,
-      data: user,
-    });
-
+    res.json({ success: true, data: user });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
